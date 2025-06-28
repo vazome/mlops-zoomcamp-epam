@@ -6,10 +6,17 @@ Homework:
 
 Originally instructor recommended to use Anaconda, but I use [UV](https://github.com/astral-sh/uv), I find it generally better and convenient. Plus their Anaconda uses old or obsolete versions of packages.
 
+Install from repo:
+```shell
+cd mlops-zoomcamp-epam
+uv sync
+```
+
+Install from scratch without using repo config:
 ``` shell
 cd mlops-zoomcamp-epam
 uv init
-uv add --dev ipykernel
+uv add --dev ipykernel #if you use vscode for jupyter notes
 uv add pandas seaborn matplotlib scikit-learn pyarrow
 ```
 
