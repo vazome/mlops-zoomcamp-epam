@@ -33,7 +33,7 @@ def run_train(data_path: str):
 
         rmse = root_mean_squared_error(y_val, y_pred)
         #logging rmse explicitly 
-        mlflow.log_param("rmse", rmse)
+        mlflow.log_metric("rmse", rmse)
 
 
 if __name__ == '__main__':
