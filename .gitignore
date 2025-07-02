@@ -194,7 +194,7 @@ cython_debug/
 .cursorindexingignore
 
 # Jupyter Data
-**/data
+data/
 
 # ML flow
 mlflow.db
