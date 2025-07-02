@@ -198,10 +198,7 @@ cython_debug/
 **/models/
 **/mlruns/
 **/output/
+**/artifacts/
 
 # ML flow
 mlflow.db
-
-mlruns/
-artifacts/
-output/

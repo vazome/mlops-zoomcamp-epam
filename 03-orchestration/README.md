@@ -1,0 +1,1 @@
+Apache Airflow will be installed via `uv`
