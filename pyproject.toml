@@ -24,7 +24,7 @@ dev = [
     "uv>=0.7.13",
 ]
 
-# For mlflow docker server
+# For mlflow docker server, though it does not change much (image still big), won't use it for now.
 mlflow-server = [
     "mlflow>=3.1.1",
     "pandas>=2.3.0",     # MLflow UI needs this

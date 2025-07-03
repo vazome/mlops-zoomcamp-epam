@@ -1,4 +1,4 @@
-FROM python:3.12-slim as builder
+FROM python:3.12-slim AS builder
 # use bytecode to quicken build, use mode copy istead of symllnking for safety
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 # Use system built-in pyton instead downloading it
@@ -12,14 +12,14 @@ WORKDIR /app
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --locked --no-install-project --group mlflow-server --no-dev --no-default-groups
-
+    uv sync --locked --no-install-project --no-dev
 ADD . /app
 
+#--group mlflow-server --no-dev --no-default-groups
 # in our cause we don't seed to install project code at all, since \
 # mlflow will be receiving data from API requests or Airflow within compose
-#RUN --mount=type=cache,target=/root/.cache/uv \
-#    uv sync --locked
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --no-dev
 
 # Multistage building
 FROM python:3.12-slim
