@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+from airflow import DAG
+#from airflow.operators.bash import BashOperator
+from airflow.providers.standard.operators.empty import EmptyOperator
+
+from datetime import datetime
+
 import pickle
 from pathlib import Path
 
@@ -12,13 +18,24 @@ from sklearn.metrics import root_mean_squared_error
 
 import mlflow
 
-mlflow.set_tracking_uri("http://localhost:5000")
+mlflow.set_tracking_uri("http://mlflow:5000")
 mlflow.set_experiment("nyc-taxi-experiment")
 
 models_folder = Path('models')
 models_folder.mkdir(exist_ok=True)
 
+default_args = {
+    'owner': 'airflow',
+    'start_date': datetime(2023, 1, 1),
+    'retries': 1
+}
 
+with DAG(
+    dag_id="my_dag_name",
+    start_date=datetime(2021, 1, 1),
+    schedule="@daily",
+):
+    EmptyOperator(task_id="task")
 
 def read_dataframe(year, month):
     url = f'https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_{year}-{month:02d}.parquet'
