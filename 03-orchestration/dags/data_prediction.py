@@ -14,8 +14,6 @@ from airflow.models.param import Param
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.metrics import root_mean_squared_error
 
-log = logging.getLogger(__name__)
-
 MODELS_FOLDER = Path("models")
 MODELS_FOLDER.mkdir(exist_ok=True)
 PREPROCESSOR_PATH = MODELS_FOLDER / "preprocessor.b"
@@ -58,16 +56,17 @@ default_args = {"owner": "airflow", "start_date": datetime.now(timezone.utc), "r
 def data_prediction_dag():
     @task
     def read_dataframe(year: int, month: int):
-        log.info(f"Reading data for {year}-{month:02d}")
+        log = logging.getLogger("airflow.task")
+        log.info("Reading data for %s-%02d", year, month)
         url = f"https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_{year}-{month:02d}.parquet"
         df = pd.read_parquet(url)
-        log.info(f"Initial dataframe shape: {df.shape}")
+        log.info("Initial dataframe shape: %s", df.shape)
 
         df["duration"] = df.lpep_dropoff_datetime - df.lpep_pickup_datetime
         df.duration = df.duration.apply(lambda td: td.total_seconds() / 60)
 
         df = df[(df.duration >= MIN_DURATION_MIN) & (df.duration <= MAX_DURATION_MIN)]
-        log.info(f"Filtered dataframe shape: {df.shape}")
+        log.info("Filtered dataframe shape: %s", df.shape)
 
         categorical = ["PULocationID", "DOLocationID"]
         df[categorical] = df[categorical].astype(str)
@@ -78,6 +77,7 @@ def data_prediction_dag():
 
     @task
     def create_x(df, dv=None):
+        log = logging.getLogger("airflow.task")
         log.info("Creating feature matrix X.")
         categorical = ["PU_DO"]
         numerical = ["trip_distance"]
@@ -91,18 +91,19 @@ def data_prediction_dag():
             log.info("Using existing DictVectorizer to transform data.")
             x = dv.transform(dicts)
 
-        log.info(f"Feature matrix shape: {x.shape}")
+        log.info("Feature matrix shape: %s", x.shape)
         return x, dv
 
     @task
     def train_model(x_train, y_train, x_val, y_val, dv):
+        log = logging.getLogger("airflow.task")
         log.info("Starting model training.")
         mlflow.set_tracking_uri("http://mlflow:5000")
         log.info("Set MLflow tracking URI.")
         mlflow.set_experiment("nyc-taxi-experiment")
         log.info("Set MLflow experiment.")
         with mlflow.start_run() as run:
-            log.info(f"Started MLflow run with ID: {run.info.run_id}")
+            log.info("Started MLflow run with ID: %s", run.info.run_id)
             train = xgb.DMatrix(x_train, label=y_train)
             valid = xgb.DMatrix(x_val, label=y_val)
 
@@ -116,7 +117,7 @@ def data_prediction_dag():
                 "seed": 42,
             }
 
-            log.info(f"Logging parameters: {best_params}")
+            log.info("Logging parameters: %s", best_params)
             mlflow.log_params(best_params)
 
             log.info("Training XGBoost model.")
@@ -131,7 +132,7 @@ def data_prediction_dag():
 
             y_pred = booster.predict(valid)
             rmse = root_mean_squared_error(y_val, y_pred)
-            log.info(f"Validation RMSE: {rmse}")
+            log.info("Validation RMSE: %s", rmse)
             mlflow.log_metric("rmse", rmse)
 
             log.info("Saving and logging preprocessor artifact.")
@@ -148,11 +149,12 @@ def data_prediction_dag():
 
     @task
     def run_training(**context):
+        log = logging.getLogger("airflow.task")
         params = context["params"]
         year = params["year"]
         month = params["month"]
 
-        log.info(f"Training model with data from {year}-{month:02d}")
+        log.info("Training model with data from %s-%02d", year, month)
 
         df_train = read_dataframe(year=year, month=month)
 
@@ -164,11 +166,11 @@ def data_prediction_dag():
         x_val, _ = create_x(df_val, dv)
 
         target = "duration"
-        y_train = df_train[target].values
-        y_val = df_val[target].values
+        y_train = df_train[target].to_numpy()
+        y_val = df_val[target].to_numpy()
 
         run_id = train_model(x_train, y_train, x_val, y_val, dv)
-        log.info(f"MLflow run_id: {run_id}")
+        log.info("MLflow run_id: %s", run_id)
         # Log the file as MLflow artifact
         with RUN_ID_PATH.open("w") as f:
             f.write(run_id)
