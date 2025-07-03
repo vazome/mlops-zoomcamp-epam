@@ -169,7 +169,7 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - "${PWD}/mlflow_data:/home/mlflow_data/"
+      - "${AIRFLOW_PROJ_DIR}/mlflow_data:/home/mlflow_data/"
 
   airflow-worker:
     <<: *airflow-common
