@@ -19,14 +19,18 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = [
-    "ipykernel>=6.29.5",
-    "uv>=0.7.13",
-]
+dev = ["ipykernel>=6.29.5", "uv>=0.7.13"]
 
 # For mlflow docker server, though it does not change much (image still big), won't use it for now.
-mlflow-server = [
-    "mlflow>=3.1.1",
-    "pandas>=2.3.0",     # MLflow UI needs this
-    "setuptools>=80.9.0", # MLflow dependency
+mlflow-server = ["mlflow>=3.1.1", "pandas>=2.3.0", "setuptools>=80.9.0"]
+
+airflow-server = [
+    "xgboost>=3.0.2",
+    "pandas>=2.3.0",
+    "hyperopt>=0.2.7",
+    "scikit-learn>=1.7.0",
 ]
+
+[tool.setuptools.packages.find]
+include = ["dags*"]
+namespaces = false

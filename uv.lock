@@ -1005,6 +1005,12 @@ dependencies = [
 ]
 
 [package.dev-dependencies]
+airflow-server = [
+    { name = "hyperopt" },
+    { name = "pandas" },
+    { name = "scikit-learn" },
+    { name = "xgboost" },
+]
 dev = [
     { name = "ipykernel" },
     { name = "uv" },
@@ -1031,6 +1037,12 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
+airflow-server = [
+    { name = "hyperopt", specifier = ">=0.2.7" },
+    { name = "pandas", specifier = ">=2.3.0" },
+    { name = "scikit-learn", specifier = ">=1.7.0" },
+    { name = "xgboost", specifier = ">=3.0.2" },
+]
 dev = [
     { name = "ipykernel", specifier = ">=6.29.5" },
     { name = "uv", specifier = ">=0.7.13" },
