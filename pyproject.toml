@@ -26,6 +26,7 @@ dev = ["ipykernel>=6.29.5", "uv>=0.7.13"]
 mlflow-server = ["mlflow>=3.1.1", "pandas>=2.3.0", "setuptools>=80.9.0"]
 
 airflow-server = [
+    "mlflow>=3.1.1",
     "xgboost>=3.0.2",
     "pandas>=2.3.0",
     "hyperopt>=0.2.7",
