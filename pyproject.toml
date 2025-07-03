@@ -35,3 +35,7 @@ airflow-server = [
 [tool.setuptools.packages.find]
 include = ["dags*"]
 namespaces = false
+
+[tool.ruff.lint]
+select = ["ALL"]
+extend-select = ["I"]

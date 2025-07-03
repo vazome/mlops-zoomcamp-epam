@@ -1,20 +1,17 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from airflow.decorators import dag, task
-from airflow.models.param import Param
-from datetime import datetime
-
 import pickle
+from datetime import datetime
 from pathlib import Path
 
+import mlflow
 import pandas as pd
 import xgboost as xgb
-
+from airflow.decorators import dag, task
+from airflow.models.param import Param
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.metrics import root_mean_squared_error
-
-import mlflow
 
 mlflow.set_tracking_uri("http://mlflow:5000")
 mlflow.set_experiment("nyc-taxi-experiment")
