@@ -1009,6 +1009,11 @@ dev = [
     { name = "ipykernel" },
     { name = "uv" },
 ]
+mlflow-server = [
+    { name = "mlflow" },
+    { name = "pandas" },
+    { name = "setuptools" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -1029,6 +1034,11 @@ requires-dist = [
 dev = [
     { name = "ipykernel", specifier = ">=6.29.5" },
     { name = "uv", specifier = ">=0.7.13" },
+]
+mlflow-server = [
+    { name = "mlflow", specifier = ">=3.1.1" },
+    { name = "pandas", specifier = ">=2.3.0" },
+    { name = "setuptools", specifier = ">=80.9.0" },
 ]
 
 [[package]]

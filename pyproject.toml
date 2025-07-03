@@ -23,3 +23,10 @@ dev = [
     "ipykernel>=6.29.5",
     "uv>=0.7.13",
 ]
+
+# For mlflow docker server
+mlflow-server = [
+    "mlflow>=3.1.1",
+    "pandas>=2.3.0",     # MLflow UI needs this
+    "setuptools>=80.9.0", # MLflow dependency
+]
