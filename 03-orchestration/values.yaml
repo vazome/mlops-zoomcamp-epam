@@ -1,0 +1,4 @@
+dags.persistence.enabled: true
+dags.persistence.existingClaim: airflow-dags-pvc
+#dags.persistence.size: 1Gi
+#dags.persistence.storageClass: standard
