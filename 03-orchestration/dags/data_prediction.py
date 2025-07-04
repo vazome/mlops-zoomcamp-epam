@@ -110,6 +110,16 @@ def data_prediction_dag():
         return {"x": x, "dv": dv}
 
     @task
+    def extract_target(df_train, df_val):
+        log = logging.getLogger("airflow.task")
+        log.info("Extracting target variable 'duration' from DataFrames.")
+        target = "duration"
+        y_train = df_train[target].to_numpy()
+        y_val = df_val[target].to_numpy()
+        log.info("y_train shape: %s, y_val shape: %s", y_train.shape, y_val.shape)
+        return {"y_train": y_train, "y_val": y_val}
+
+    @task
     def train_model(x_train, y_train, x_val, y_val, dv):
         log = logging.getLogger("airflow.task")
         log.info("Starting model training.")
@@ -175,17 +185,17 @@ def data_prediction_dag():
     df_train = read_dataframe(year=params["year"], month=params["month"])
     df_val = read_dataframe(year=dates["next_year"], month=dates["next_month"])
 
+    # Extract target variables
+    target_dict = extract_target(df_train, df_val)
+    y_train = target_dict["y_train"]
+    y_val = target_dict["y_val"]
+
     # Create feature matrices
     train_x_dict = create_x(df_train)
     x_train = train_x_dict["x"]
     dv = train_x_dict["dv"]
     val_x_dict = create_x(df_val, dv=dv)
     x_val = val_x_dict["x"]
-
-    # Extract target
-    target = "duration"
-    y_train = df_train[target].to_numpy()
-    y_val = df_val[target].to_numpy()
 
     # Train model
     run_id = train_model(x_train, y_train, x_val, y_val, dv)
