@@ -62,6 +62,14 @@ def data_prediction_dag():
         return {"year": year, "month": month}
 
     @task
+    def calculate_dates(year: int, month: int):
+        log = logging.getLogger("airflow.task")
+        next_year = year if month < 12 else year + 1
+        next_month = month + 1 if month < 12 else 1
+        log.info("Calculated dates: next_year=%s, next_month=%s", next_year, next_month)
+        return {"next_year": next_year, "next_month": next_month}
+
+    @task
     def read_dataframe(year: int, month: int):
         log = logging.getLogger("airflow.task")
         log.info("Reading data for %s-%02d", year, month)
@@ -161,14 +169,11 @@ def data_prediction_dag():
 
     # Define task instances and dependencies
     params = get_params()
-    year = params["year"]
-    month = params["month"]
+    dates = calculate_dates(year=params["year"], month=params["month"])
 
     # Read training and validation data
-    df_train = read_dataframe(year=year, month=month)
-    next_year = year if month < 12 else year + 1
-    next_month = month + 1 if month < 12 else 1
-    df_val = read_dataframe(year=next_year, month=next_month)
+    df_train = read_dataframe(year=params["year"], month=params["month"])
+    df_val = read_dataframe(year=dates["next_year"], month=dates["next_month"])
 
     # Create feature matrices
     train_x_dict = create_x(df_train)
