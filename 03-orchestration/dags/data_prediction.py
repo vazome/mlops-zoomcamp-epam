@@ -22,9 +22,7 @@ RUN_ID_PATH = Path("run_id.txt")
 MAX_DURATION_MIN = 60
 MIN_DURATION_MIN = 1
 
-
 default_args = {"owner": "airflow", "start_date": datetime.now(timezone.utc), "retries": 0}
-
 
 @dag(
     dag_id="data_prediction",
@@ -51,7 +49,7 @@ default_args = {"owner": "airflow", "start_date": datetime.now(timezone.utc), "r
             description="Month of the data to train on (1-12)",
         ),
     },
-    render_template_as_native_obj=True,  # Ensures params are passed as native types, not strings
+    render_template_as_native_obj=True,
 )
 def data_prediction_dag():
     @task
@@ -92,7 +90,7 @@ def data_prediction_dag():
             x = dv.transform(dicts)
 
         log.info("Feature matrix shape: %s", x.shape)
-        return x, dv
+        return {"x": x, "dv": dv}
 
     @task
     def train_model(x_train, y_train, x_val, y_val, dv):
@@ -145,48 +143,41 @@ def data_prediction_dag():
             mlflow.xgboost.log_model(booster, artifact_path="models_mlflow")
             log.info("XGBoost model logged.")
 
+            with RUN_ID_PATH.open("w") as f:
+                f.write(run.info.run_id)
+            mlflow.log_artifact(str(RUN_ID_PATH), artifact_path="outputs")
+            log.info("Logged run_id.txt as artifact.")
+
             return run.info.run_id
 
-    @task
-    def run_training(**context):
-        log = logging.getLogger("airflow.task")
-        params = context["params"]
-        year = params["year"]
-        month = params["month"]
+    # Define task instances and dependencies
+    params = {"year": "{{ params.year }}", "month": "{{ params.month }}"}
+    year = params["year"]
+    month = params["month"]
 
-        log.info("Training model with data from %s-%02d", year, month)
+    # Read training and validation data
+    df_train = read_dataframe(year=year, month=month)
+    next_year = year if month < 12 else year + 1
+    next_month = month + 1 if month < 12 else 1
+    df_val = read_dataframe(year=next_year, month=next_month)
 
-        df_train = read_dataframe(year=year, month=month)
+    # Create feature matrices
+    train_x_dict = create_x(df_train)
+    x_train = train_x_dict["x"]
+    dv = train_x_dict["dv"]
+    val_x_dict = create_x(df_val, dv=dv)
+    x_val = val_x_dict["x"]
 
-        next_year = year if month < 12 else year + 1
-        next_month = month + 1 if month < 12 else 1
-        df_val = read_dataframe(year=next_year, month=next_month)
+    # Extract target
+    target = "duration"
+    y_train = df_train[target].to_numpy()
+    y_val = df_val[target].to_numpy()
 
-        x_train, dv = create_x(df_train)
-        x_val, _ = create_x(df_val, dv)
+    # Train model
+    run_id = train_model(x_train, y_train, x_val, y_val, dv)
 
-        target = "duration"
-        y_train = df_train[target].to_numpy()
-        y_val = df_val[target].to_numpy()
-
-        run_id = train_model(x_train, y_train, x_val, y_val, dv)
-        log.info("MLflow run_id: %s", run_id)
-        # Log the file as MLflow artifact
-        with RUN_ID_PATH.open("w") as f:
-            f.write(run_id)
-        with mlflow.start_run(run_id=run_id):
-            mlflow.log_artifact(str(RUN_ID_PATH), artifact_path="outputs")
-        log.info("Logged run_id.txt as artifact.")
-
-        return run_id
-
-    # Define the task flow within the DAG
-    return run_training()
-
-
-# Allow us to execute via Airflow Scheduler
+# Instantiate the DAG
 dag_instance = data_prediction_dag()
 
-# Allow us to execute via bash
 if __name__ == "__main__":
     dag_instance.test()

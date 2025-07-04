@@ -10,4 +10,5 @@ spec:
     storage: 1Gi
   storageClassName: standard
   hostPath:
+    type: Directory
     path: /home/daniel/github/mlops-zoomcamp-epam/03-orchestration/dags

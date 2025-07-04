@@ -1,6 +1,9 @@
 dags:
-  persistence:
+  gitSync:
     enabled: true
-    existingClaim: airflow-dags-pvc
+    repo: https://github.com/vazome/mlops-zoomcamp-epam.git
+    branch: main
+    subPath: 03-orchestration/dags
+    period: 5s
 #dags.persistence.size: 1Gi
 #dags.persistence.storageClass: standard
