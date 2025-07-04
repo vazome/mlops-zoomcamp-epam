@@ -53,6 +53,15 @@ default_args = {"owner": "airflow", "start_date": datetime.now(timezone.utc), "r
 )
 def data_prediction_dag():
     @task
+    def get_params(**context):
+        log = logging.getLogger("airflow.task")
+        params = context["params"]
+        year = params["year"]
+        month = params["month"]
+        log.info("Extracted parameters: year=%s, month=%s", year, month)
+        return {"year": year, "month": month}
+
+    @task
     def read_dataframe(year: int, month: int):
         log = logging.getLogger("airflow.task")
         log.info("Reading data for %s-%02d", year, month)
@@ -151,7 +160,7 @@ def data_prediction_dag():
             return run.info.run_id
 
     # Define task instances and dependencies
-    params = {"year": "{{ params.year }}", "month": "{{ params.month }}"}
+    params = get_params()
     year = params["year"]
     month = params["month"]
 
