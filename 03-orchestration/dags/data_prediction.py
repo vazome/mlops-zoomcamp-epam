@@ -11,6 +11,7 @@ import pandas as pd
 import xgboost as xgb
 from airflow.decorators import dag, task
 from airflow.models.param import Param
+from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.metrics import root_mean_squared_error
 
@@ -89,6 +90,18 @@ def data_prediction_dag():
         df["PU_DO"] = df["PULocationID"] + "_" + df["DOLocationID"]
 
         return df
+
+    @task
+    def save_objects_to_s3():
+        log = logging.getLogger("airflow.task")
+        hook = S3Hook(aws_conn_id="S3")
+        bucket_name = hook.get_conn().extra_dejson.get('bucket_name')
+        hook.load_string(
+                    string_data='Hello, S3!',
+                    key='test.txt',
+                    bucket_name=bucket_name
+                )
+        log.info(f"Uploaded to s3://{bucket_name}/test.txt")
 
     @task(multiple_outputs=True)
     def create_x(df, dv=None):

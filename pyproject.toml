@@ -5,7 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "apache-airflow>=3.0.2",
+    "apache-airflow[amazon]>=3.0.2",
     "boto3>=1.38.46",
     "fastparquet>=2024.11.0",
     "hyperopt>=0.2.7",
