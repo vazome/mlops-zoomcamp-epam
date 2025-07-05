@@ -34,21 +34,17 @@ default_args = {"owner": "airflow", "start_date": datetime.now(timezone.utc), "r
     start_date=datetime.now(timezone.utc),
     tags=["mlops", "taxi-prediction", "xgboost"],
     params={
-        "year": Param(
-            2024,
-            type="integer",
-            minimum=2009,
-            maximum=2030,
-            title="Year",
-            description="Year of the data to train on (NYC taxi data)",
+        "name": Param(
+            "Hello",
+            type="string",
+            title="Name",
+            description="Name of the file to upload to S3",
         ),
-        "month": Param(
-            1,
-            type="integer",
-            minimum=1,
-            maximum=12,
-            title="Month",
-            description="Month of the data to train on (1-12)",
+        "contents": Param(
+            "Hi! I'm a test file",
+            type="string",
+            title="Contents",
+            description="Contents of the file to upload to S3",
         ),
     },
     render_template_as_native_obj=True,
@@ -58,27 +54,27 @@ def upload_to_s3_test():
     def get_params(**context):
         log = logging.getLogger("airflow.task")
         params = context["params"]
-        year = params["year"]
-        month = params["month"]
-        log.info("Extracted parameters: year=%s, month=%s", year, month)
-        return {"year": year, "month": month}
+        name = params["name"]
+        contents = params["contents"]
+        log.info("Extracted parameters: name=%s, contents=%s", name, contents)
+        return {"name": name, "contents": contents}
 
     @task
-    def save_objects_to_s3():
+    def save_objects_to_s3(name: str, contents: str):
         log = logging.getLogger("airflow.task")
         hook =  S3Hook(aws_conn_id="S3")
         conn = Connection.get_connection_from_secrets("S3")
         bucket_name = conn.extra_dejson.get('bucket_name') #get('service_config', {}).get('s3', {}).
         hook.load_string(
-                    string_data='Hello, S3!',
-                    key='test.txt',
+                    string_data=f"{contents}",
+                    key=f"{name}.txt",
                     bucket_name=bucket_name
                 )
-        log.info(f"Uploaded to s3://{bucket_name}/test.txt")
+        log.info(f"Uploaded to s3://{bucket_name}/{name}.txt")
 
     # Define task instances and dependencies
     params = get_params()
-    save_to_s3 = save_objects_to_s3()
+    save_to_s3 = save_objects_to_s3(name=params["name"], contents=params["contents"])
 
 
 # Instantiate the DAG
