@@ -32,7 +32,7 @@ default_args = {"owner": "airflow", "start_date": datetime.now(timezone.utc), "r
     schedule=None,  # Manual trigger only
     catchup=False,
     start_date=datetime.now(timezone.utc),
-    tags=["mlops", "taxi-prediction", "xgboost"],
+    tags=["s3", "upload", "test"],
     params={
         "name": Param(
             "Hello",
