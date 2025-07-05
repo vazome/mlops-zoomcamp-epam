@@ -52,7 +52,7 @@ default_args = {"owner": "airflow", "start_date": datetime.now(timezone.utc), "r
     render_template_as_native_obj=True,
 )
 def data_prediction_dag():
-    @task
+    @task(multiple_outputs=True)
     def get_params(**context):
         log = logging.getLogger("airflow.task")
         params = context["params"]
@@ -61,7 +61,7 @@ def data_prediction_dag():
         log.info("Extracted parameters: year=%s, month=%s", year, month)
         return {"year": year, "month": month}
 
-    @task
+    @task(multiple_outputs=True)
     def calculate_dates(year: int, month: int):
         log = logging.getLogger("airflow.task")
         next_year = year if month < 12 else year + 1
@@ -90,7 +90,7 @@ def data_prediction_dag():
 
         return df
 
-    @task
+    @task(multiple_outputs=True)
     def create_x(df, dv=None):
         log = logging.getLogger("airflow.task")
         log.info("Creating feature matrix X.")
@@ -109,7 +109,7 @@ def data_prediction_dag():
         log.info("Feature matrix shape: %s", x.shape)
         return {"x": x, "dv": dv}
 
-    @task
+    @task(multiple_outputs=True)
     def extract_target(df_train, df_val):
         log = logging.getLogger("airflow.task")
         log.info("Extracting target variable 'duration' from DataFrames.")
