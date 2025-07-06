@@ -19,7 +19,7 @@ from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.metrics import root_mean_squared_error
 
-MODELS_FOLDER = Path("models")
+MODELS_FOLDER = Path("/tmp/models")
 MODELS_FOLDER.mkdir(exist_ok=True)
 PREPROCESSOR_PATH = MODELS_FOLDER / "preprocessor.b"
 RUN_ID_PATH = Path("run_id.txt")
