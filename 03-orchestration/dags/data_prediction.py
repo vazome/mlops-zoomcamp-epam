@@ -19,6 +19,9 @@ from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.metrics import root_mean_squared_error
 
+MODELS_FOLDER = Path("models")
+MODELS_FOLDER.mkdir(exist_ok=True)
+PREPROCESSOR_PATH = MODELS_FOLDER / "preprocessor.b"
 RUN_ID_PATH = Path("run_id.txt")
 MLFLOW_TRACKING_URI = "http://mlflow.mlflow.svc.cluster.local:5000"
 MAX_DURATION_MIN = 60
@@ -147,7 +150,6 @@ def data_prediction_dag():
     def train_model(x_train, y_train, x_val, y_val, dv):
         log = logging.getLogger("airflow.task")
         log.info("Starting model training.")
-        mlflow.autolog()
         mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
         log.info("Set MLflow tracking URI.")
         mlflow.set_experiment("nyc-taxi-experiment")
@@ -193,11 +195,6 @@ def data_prediction_dag():
             mlflow.log_metric("rmse", rmse)
 
             log.info("Saving and logging preprocessor artifact.")
-            mlflow.sklearn.log_model(dv, "preprocessor")
-            log.info("23123 Saving and logging preprocessor artifact.")
-            MODELS_FOLDER = Path("/tmp/models")
-            MODELS_FOLDER.mkdir(exist_ok=True)
-            PREPROCESSOR_PATH = MODELS_FOLDER / "preprocessor.b"
             with PREPROCESSOR_PATH.open("wb") as f_out:
                 pickle.dump(dv, f_out)
             mlflow.log_artifact(str(PREPROCESSOR_PATH), artifact_path="preprocessor")

@@ -1,4 +1,4 @@
-FROM ghcr.io/mlflow/mlflow:v2.15.0
+FROM ghcr.io/mlflow/mlflow:v3.1.1
 
 RUN apt-get -y update && \
     apt-get -y install python3-dev build-essential pkg-config && \
