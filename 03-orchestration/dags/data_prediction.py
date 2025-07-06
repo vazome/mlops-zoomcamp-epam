@@ -193,6 +193,8 @@ def data_prediction_dag():
             mlflow.log_metric("rmse", rmse)
 
             log.info("Saving and logging preprocessor artifact.")
+            mlflow.sklearn.log_model(dv, "preprocessor")
+            log.info("23123 Saving and logging preprocessor artifact.")
             MODELS_FOLDER = Path("/tmp/models")
             MODELS_FOLDER.mkdir(exist_ok=True)
             PREPROCESSOR_PATH = MODELS_FOLDER / "preprocessor.b"
