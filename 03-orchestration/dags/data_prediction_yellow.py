@@ -82,13 +82,13 @@ def data_prediction_dag():
             mlflow.log_param("data_url", url)
 
             df = pd.read_parquet(url)
-            mlflow.log_metric("initial_row_count", len(df))
+            mlflow.log_metric("Intial rows:", len(df))
 
             df["duration"] = df.tpep_dropoff_datetime  - df.tpep_pickup_datetime
             df.duration = df.duration.dt.total_seconds() / 60
 
             df = df[(df.duration >= 1) & (df.duration <= 60)]
-            mlflow.log_metric("filtered_row_count", len(df))
+            mlflow.log_metric("Filtered rows:", len(df))
             log.info("Filtered dataframe shape: %s", df.shape)
 
             categorical = ["PULocationID", "DOLocationID"]
@@ -101,7 +101,7 @@ def data_prediction_dag():
             df.to_parquet(local_path, index=False)
 
             # Log df artifact to MLflow
-            mlflow.log_artifacts(str(local_path), artifact_path="data")
+            mlflow.log_artifact(str(local_path), artifact_path="data")
             log.info("Logged processed data as artifact to MLflow run %s", run_id)
 
             return
