@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import mlflow
+import mlflow.artifacts
 import numpy as np
 import pandas as pd
 import xgboost as xgb
@@ -93,7 +94,17 @@ def data_prediction_dag():
             categorical = ["PULocationID", "DOLocationID"]
             df[categorical] = df[categorical].astype(str)
 
-            return df
+            # Save df to a temporary file
+            temp_dir = Path("/tmp/processed_data")
+            temp_dir.mkdir(exist_ok=True)
+            local_path = temp_dir / "processed_data.parquet"
+            df.to_parquet(local_path, index=False)
+
+            # Log df artifact to MLflow
+            mlflow.log_artifacts(str(local_path), artifact_path="data")
+            log.info("Logged processed data as artifact to MLflow run %s", run_id)
+
+            return
 
     @task(multiple_outputs=True)
     def create_x(df: pd.DataFrame, run_id: str):
@@ -102,6 +113,14 @@ def data_prediction_dag():
 
         mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
         with mlflow.start_run(run_id=run_id):
+            # Download the processed data artifact from MLflow
+            log.info("Downloading processed data artifact...")
+            artifact_path = mlflow.artifacts.download_artifacts(
+                run_id=run_id, artifact_path="data/processed_data.parquet"
+            )
+            log.info("Artifact downloaded to: %s", artifact_path)
+            df = pd.read_parquet(artifact_path)
+
             dv = DictVectorizer()
             categories = ["PULocationID", "DOLocationID"]
             target = "duration"
@@ -134,7 +153,7 @@ def data_prediction_dag():
             rmse = root_mean_squared_error(y_train, y_pred)
             log.info("RMSE: %s", rmse)
 
-            # Log metrics, params, and model
+            # Log metric and model
             mlflow.log_metric("rmse", rmse)
             log.info("Intercept is: %s", lr.intercept_)
             mlflow.sklearn.log_model(
@@ -144,17 +163,18 @@ def data_prediction_dag():
             )
         return run_id
 
-    # Define task instances and dependencies
+    # Define task instances
     params = get_params()
     run_id = mlflow_run(year=params["year"], month=params["month"])
-    df_train = read_dataframe(year=params["year"], month=params["month"], run_id=run_id)
 
-    train_x_dict = create_x(df=df_train, run_id=run_id)
+    read_dataframe(year=params["year"], month=params["month"], run_id=run_id)
+
+    train_x_dict = create_x(run_id=run_id)
 
     train_model(
-        x_train=train_x_dict["x_train"], 
-        y_train=train_x_dict["y_train"], 
-        run_id=run_id
+        x_train=train_x_dict["x_train"],
+        y_train=train_x_dict["y_train"],
+        run_id=run_id,
     )
 
 # Instantiate the DAG
