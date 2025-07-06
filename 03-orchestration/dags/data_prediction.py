@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import base64
 import logging
 import pickle
 from datetime import datetime, timezone
@@ -95,7 +96,7 @@ def data_prediction_dag():
 
     @task
     def save_objects_to_s3(name: str, contents: str):
-        """ Save objects to S3 bucket. We may need it of XCOM fails"""
+        """Save objects to S3 bucket. We may need it of XCOM fails"""
         log = logging.getLogger("airflow.task")
         hook =  S3Hook(aws_conn_id="S3")
         conn = Connection.get_connection_from_secrets("S3")
@@ -117,14 +118,15 @@ def data_prediction_dag():
 
         if dv is None:
             log.info("No DictVectorizer provided, fitting a new one.")
-            dv = DictVectorizer(sparse=False)  # Use dense arrays directly so it is serializable
+            dv = DictVectorizer(sparse=True)  # Use dense arrays directly so it is serializable
             x = dv.fit_transform(dicts)
         else:
             log.info("Using existing DictVectorizer to transform data.")
             x = dv.transform(dicts)
+        x_pickled = base64.b64encode(pickle.dumps(x)).decode('utf-8')
 
         log.info("Feature matrix shape: %s", x.shape)
-        return {"x": x, "dv": dv}
+        return {"x": x_pickled, "dv": dv}
 
     @task(multiple_outputs=True)
     def extract_target(df_train, df_val):
@@ -144,6 +146,8 @@ def data_prediction_dag():
         log.info("Set MLflow tracking URI.")
         mlflow.set_experiment("nyc-taxi-experiment")
         log.info("Set MLflow experiment.")
+        x_train = pickle.loads(base64.b64decode(x_train.encode('utf-8')))
+        x_val = pickle.loads(base64.b64decode(x_val.encode('utf-8')))
         with mlflow.start_run() as run:
             log.info("Started MLflow run with ID: %s", run.info.run_id)
             train = xgb.DMatrix(x_train, label=y_train)
