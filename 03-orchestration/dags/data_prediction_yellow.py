@@ -88,6 +88,10 @@ def data_prediction_dag():
         categorical = ["PULocationID", "DOLocationID"]
         df[categorical] = df[categorical].astype(str)
 
+        memory_usage_bytes = df.memory_usage(deep=True).sum()
+        memory_usage_mb = memory_usage_bytes / (1024 * 1024)
+        log.info("usage: %.2f MB (%d bytes)", memory_usage_mb, memory_usage_bytes)
+
         return df
 
     @task(multiple_outputs=True)
