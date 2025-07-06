@@ -23,7 +23,7 @@ MODELS_FOLDER = Path("models")
 MODELS_FOLDER.mkdir(exist_ok=True)
 PREPROCESSOR_PATH = MODELS_FOLDER / "preprocessor.b"
 RUN_ID_PATH = Path("run_id.txt")
-
+MLFLOW_TRACKING_URI = "http://mlflow.mlflow.svc.cluster.local:5000"
 MAX_DURATION_MIN = 60
 MIN_DURATION_MIN = 1
 
@@ -150,7 +150,7 @@ def data_prediction_dag():
     def train_model(x_train, y_train, x_val, y_val, dv):
         log = logging.getLogger("airflow.task")
         log.info("Starting model training.")
-        mlflow.set_tracking_uri("http://mlflow:5000")
+        mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
         log.info("Set MLflow tracking URI.")
         mlflow.set_experiment("nyc-taxi-experiment")
         log.info("Set MLflow experiment.")

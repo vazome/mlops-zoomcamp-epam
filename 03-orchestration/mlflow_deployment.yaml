@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: mlflow
-        image: mlflow:0.0.1
+        image: mlflow:0.0.2
         ports:
         - containerPort: 5000
         env:
