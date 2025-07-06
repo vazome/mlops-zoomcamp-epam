@@ -56,7 +56,7 @@ spec:
               secretKeyRef:
                 name: mlflow-secrets
                 key: aws-bucket-uri
-        command: ["mlflow", "server", "--host", "0.0.0.0", "--port", "5000", "--backend-store-uri", "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres-service:5432/$(POSTGRES_DB)", "--serve-artifacts", "--artifacts-destination", "s3://$(AWS_BUCKET_URI)/artifacts"]
+        command: ["mlflow", "server", "--host", "0.0.0.0", "--port", "5000", "--backend-store-uri", "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres-service:5432/$(POSTGRES_DB)", "--serve-artifacts", "--default-artifact-root", "s3://$(AWS_BUCKET_URI)/artifacts"]
         resources:
           requests:
             memory: "512Mi"
