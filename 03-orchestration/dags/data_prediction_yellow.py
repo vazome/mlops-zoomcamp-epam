@@ -107,7 +107,7 @@ def data_prediction_dag():
             return
 
     @task(multiple_outputs=True)
-    def create_x(df: pd.DataFrame, run_id: str):
+    def create_x(run_id: str):
         log = logging.getLogger("airflow.task")
         log.info("Creating feature matrix X for run_id: %s", run_id)
 
@@ -139,7 +139,7 @@ def data_prediction_dag():
     def train_model(x_train: str, y_train: str, run_id: str):
         log = logging.getLogger("airflow.task")
         log.info("Starting model training for run_id: %s", run_id)
-        
+
         mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
         with mlflow.start_run(run_id=run_id):
             # Deserialize the inputs
