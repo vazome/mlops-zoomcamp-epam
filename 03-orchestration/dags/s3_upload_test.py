@@ -68,7 +68,7 @@ def upload_to_s3_test():
         hook.load_string(
                     string_data=f"{contents}",
                     key=f"{name}.txt",
-                    bucket_name=bucket_name
+                    bucket_name=bucket_name,
                 )
         log.info(f"Uploaded to s3://{bucket_name}/{name}.txt")
 

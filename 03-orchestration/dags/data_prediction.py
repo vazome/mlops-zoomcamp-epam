@@ -10,7 +10,9 @@ import mlflow
 import pandas as pd
 import xgboost as xgb
 from airflow.decorators import dag, task
+from airflow.models.connection import Connection
 from airflow.models.param import Param
+from airflow.models.xcom import BaseXCom
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.metrics import root_mean_squared_error
@@ -92,16 +94,18 @@ def data_prediction_dag():
         return df
 
     @task
-    def save_objects_to_s3():
+    @task
+    def save_objects_to_s3(name: str, contents: str):
         log = logging.getLogger("airflow.task")
-        hook = S3Hook(aws_conn_id="S3")
-        bucket_name = hook.get_conn().extra_dejson.get('bucket_name')
+        hook =  S3Hook(aws_conn_id="S3")
+        conn = Connection.get_connection_from_secrets("S3")
+        bucket_name = conn.extra_dejson.get('bucket_name') #get('service_config', {}).get('s3', {}).
         hook.load_string(
-                    string_data='Hello, S3!',
-                    key='test.txt',
-                    bucket_name=bucket_name
+                    string_data=f"{contents}",
+                    key=f"{name}.txt",
+                    bucket_name=bucket_name,
                 )
-        log.info(f"Uploaded to s3://{bucket_name}/test.txt")
+        log.info(f"Uploaded to s3://{bucket_name}/{name}.txt")
 
     @task(multiple_outputs=True)
     def create_x(df, dv=None):
@@ -113,7 +117,7 @@ def data_prediction_dag():
 
         if dv is None:
             log.info("No DictVectorizer provided, fitting a new one.")
-            dv = DictVectorizer(sparse=True)
+            dv = DictVectorizer(sparse=False)  # Use dense arrays directly so it is serializable
             x = dv.fit_transform(dicts)
         else:
             log.info("Using existing DictVectorizer to transform data.")
