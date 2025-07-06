@@ -121,6 +121,7 @@ def data_prediction_dag():
             dv = DictVectorizer(sparse=True)  # Use dense arrays directly so it is serializable
             x = dv.fit_transform(dicts)
         else:
+            dv = pickle.loads(base64.b64decode(dv.encode('utf-8')))
             log.info("Using existing DictVectorizer to transform data.")
             x = dv.transform(dicts)
         x_pickled = base64.b64encode(pickle.dumps(x)).decode('utf-8')
