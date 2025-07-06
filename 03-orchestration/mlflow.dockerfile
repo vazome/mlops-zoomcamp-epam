@@ -1,9 +1,9 @@
-FROM ghcr.io/mlflow/mlflow:v3.1.1
+FROM ghcr.io/mlflow/mlflow:v2.15.0
 
 RUN apt-get -y update && \
     apt-get -y install python3-dev build-essential pkg-config && \
     pip install --upgrade pip && \
     pip install psycopg2-binary boto3
 
-# Launch mlflow via uv (TEMP DB in /tmp)
+# Launch mlflow via (TEMP DB in /tmp)
 CMD ["bash"]

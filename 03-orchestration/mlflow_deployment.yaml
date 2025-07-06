@@ -37,6 +37,10 @@ spec:
               secretKeyRef:
                 name: postgres-secret
                 key: postgres-db
+          - name: AWS_DEFAULT_REGION
+            value: eu-north-1
+          - name: MLFLOW_S3_ENDPOINT_URL
+            value: https://s3.eu-north-1.amazonaws.com
           - name: AWS_ACCESS_KEY_ID
             valueFrom:
               secretKeyRef:
@@ -51,8 +55,8 @@ spec:
             valueFrom:
               secretKeyRef:
                 name: mlflow-secrets
-                key: "aws-bucket-uri"
-        command: ["mlflow", "server", "--host", "0.0.0.0", "--port", "5000", "--backend-store-uri", "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres-service:5432/$(POSTGRES_DB)", "--artifacts-destination", "s3://$(AWS_BUCKET_URI)/artifacts", "--serve-artifacts"]
+                key: aws-bucket-uri
+        command: ["mlflow", "server", "--host", "0.0.0.0", "--port", "5000", "--backend-store-uri", "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres-service:5432/$(POSTGRES_DB)", "--serve-artifacts", "--artifacts-destination", "s3://$(AWS_BUCKET_URI)/artifacts"]
         resources:
           requests:
             memory: "512Mi"
