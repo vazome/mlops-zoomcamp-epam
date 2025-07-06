@@ -95,6 +95,7 @@ def data_prediction_dag():
 
     @task
     def save_objects_to_s3(name: str, contents: str):
+        """ Save objects to S3 bucket. We may need it of XCOM fails"""
         log = logging.getLogger("airflow.task")
         hook =  S3Hook(aws_conn_id="S3")
         conn = Connection.get_connection_from_secrets("S3")
