@@ -95,19 +95,19 @@ def data_prediction_dag():
 
         return df
 
-    @task
-    def save_objects_to_s3(name: str, contents: str):
-        """Save objects to S3 bucket. We may need it of XCOM fails"""
-        log = logging.getLogger("airflow.task")
-        hook =  S3Hook(aws_conn_id="S3")
-        conn = Connection.get_connection_from_secrets("S3")
-        bucket_name = conn.extra_dejson.get('bucket_name') #get('service_config', {}).get('s3', {}).
-        hook.load_string(
-                    string_data=f"{contents}",
-                    key=f"{name}.txt",
-                    bucket_name=bucket_name,
-                )
-        log.info(f"Uploaded to s3://{bucket_name}/{name}.txt")
+#    @task
+#    def save_objects_to_s3(name: str, contents: str):
+#        """Save objects to S3 bucket. We may need it of XCOM fails"""
+#        log = logging.getLogger("airflow.task")
+#        hook =  S3Hook(aws_conn_id="S3")
+#        conn = Connection.get_connection_from_secrets("S3")
+#        bucket_name = conn.extra_dejson.get('bucket_name') #get('service_config', {}).get('s3', {}).
+#        hook.load_string(
+#                    string_data=f"{contents}",
+#                    key=f"{name}.txt",
+#                    bucket_name=bucket_name,
+#                )
+#        log.info(f"Uploaded to s3://{bucket_name}/{name}.txt")
 
     @task(multiple_outputs=True)
     def create_x(df, dv=None):

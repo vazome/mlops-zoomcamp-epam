@@ -20,8 +20,8 @@ spec:
         ports:
         - containerPort: 5000
         env:
-          - name: MLFLOW_S3_IGNORE_TLS
-            value: "true"
+          #- name: MLFLOW_S3_IGNORE_TLS
+           # value: "true"
           - name: POSTGRES_USER
             valueFrom:
               secretKeyRef:
@@ -52,7 +52,7 @@ spec:
               secretKeyRef:
                 name: mlflow-secrets
                 key: "aws-bucket-uri"
-        command: ["mlflow", "server", "--host", "0.0.0.0", "--port", "5000", "--backend-store-uri", "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres-service:5432/$(POSTGRES_DB)", "--artifact-destination", "s3://$(AWS_BUCKET_URI)", "--serve-artifacts"]
+        command: ["mlflow", "server", "--host", "0.0.0.0", "--port", "5000", "--backend-store-uri", "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres-service:5432/$(POSTGRES_DB)", "--artifacts-destination", "s3://$(AWS_BUCKET_URI)/artifacts", "--serve-artifacts"]
         resources:
           requests:
             memory: "512Mi"
