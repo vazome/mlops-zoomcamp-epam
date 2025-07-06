@@ -23,7 +23,7 @@ MODELS_FOLDER = Path("/tmp/models")
 MODELS_FOLDER.mkdir(exist_ok=True)
 PREPROCESSOR_PATH = MODELS_FOLDER / "preprocessor.b"
 RUN_ID_PATH = Path("run_id.txt")
-MLFLOW_TRACKING_URI = "http://mlflow.mlflow.svc.cluster.local:5000"
+MLFLOW_TRACKING_URI = "http://ec2-16-170-162-168.eu-north-1.compute.amazonaws.com:5000"
 MAX_DURATION_MIN = 60
 MIN_DURATION_MIN = 1
 
