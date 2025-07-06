@@ -30,9 +30,9 @@ ENV PATH="/app/.venv/bin:$PATH"
 
 EXPOSE 5000
 
-# Launch mlflow via uv
+# Launch mlflow via uv (TEMP DB)
 CMD [ "mlflow", "server", \
-    "--backend-store-uri", "sqlite:///home/mlflow_data/mlflow.db", \
+    "--backend-store-uri", "sqlite:///mlflow.db", \
     "--host", "0.0.0.0", \
     "--port", "5000" \
     ]

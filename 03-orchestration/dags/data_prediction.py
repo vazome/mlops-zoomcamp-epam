@@ -139,6 +139,7 @@ def data_prediction_dag():
         #y_train = df_train[target].to_numpy()
         #y_val = df_val[target].to_numpy()
         #log.info("y_train shape: %s, y_val shape: %s", y_train.shape, y_val.shape)
+
         # Convert to Python lists for serialization - XCom compatibility
         y_train = df_train[target].to_list()
         y_val = df_val[target].to_list()
@@ -153,6 +154,7 @@ def data_prediction_dag():
         log.info("Set MLflow tracking URI.")
         mlflow.set_experiment("nyc-taxi-experiment")
         log.info("Set MLflow experiment.")
+
         # Deserialize the inputs, unnload and convert to NumPy arrays
         y_train = np.array(y_train)
         y_val = np.array(y_val)
