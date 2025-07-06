@@ -136,12 +136,13 @@ def data_prediction_dag():
         log = logging.getLogger("airflow.task")
         log.info("Extracting target variable 'duration' from DataFrames.")
         target = "duration"
-        y_train = df_train[target].to_numpy()
-        y_val = df_val[target].to_numpy()
-        log.info("y_train shape: %s, y_val shape: %s", y_train.shape, y_val.shape)
+        #y_train = df_train[target].to_numpy()
+        #y_val = df_val[target].to_numpy()
+        #log.info("y_train shape: %s, y_val shape: %s", y_train.shape, y_val.shape)
         # Convert to Python lists for serialization - XCom compatibility
-        y_train = y_train.to_list()
-        y_val = y_val.to_list()
+        y_train = df_train[target].to_list()
+        y_val = df_val[target].to_list()
+        log.info("y_train shape: %s, y_val shape: %s", len(y_train), len(y_val))
         return {"y_train": y_train, "y_val": y_val}
 
     @task
