@@ -124,9 +124,10 @@ def data_prediction_dag():
             log.info("Using existing DictVectorizer to transform data.")
             x = dv.transform(dicts)
         x_pickled = base64.b64encode(pickle.dumps(x)).decode('utf-8')
+        dv_pickled = base64.b64encode(pickle.dumps(dv)).decode('utf-8')
 
         log.info("Feature matrix shape: %s", x.shape)
-        return {"x": x_pickled, "dv": dv}
+        return {"x": x_pickled, "dv": dv_pickled}
 
     @task(multiple_outputs=True)
     def extract_target(df_train, df_val):
@@ -146,6 +147,7 @@ def data_prediction_dag():
         log.info("Set MLflow tracking URI.")
         mlflow.set_experiment("nyc-taxi-experiment")
         log.info("Set MLflow experiment.")
+        dv = pickle.loads(base64.b64decode(dv.encode('utf-8')))
         x_train = pickle.loads(base64.b64decode(x_train.encode('utf-8')))
         x_val = pickle.loads(base64.b64decode(x_val.encode('utf-8')))
         with mlflow.start_run() as run:
