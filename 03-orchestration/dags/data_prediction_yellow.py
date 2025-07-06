@@ -17,10 +17,6 @@ from sklearn.feature_extraction import DictVectorizer
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import root_mean_squared_error
 
-MODELS_FOLDER = Path("/tmp/models")
-MODELS_FOLDER.mkdir(exist_ok=True)
-PREPROCESSOR_PATH = MODELS_FOLDER / "preprocessor.b"
-RUN_ID_PATH = Path("run_id.txt")
 MLFLOW_TRACKING_URI = "http://ec2-16-170-162-168.eu-north-1.compute.amazonaws.com:5000"
 
 default_args = {"owner": "airflow", "start_date": datetime.now(timezone.utc), "retries": 0}
