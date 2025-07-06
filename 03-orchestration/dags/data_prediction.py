@@ -94,7 +94,6 @@ def data_prediction_dag():
         return df
 
     @task
-    @task
     def save_objects_to_s3(name: str, contents: str):
         log = logging.getLogger("airflow.task")
         hook =  S3Hook(aws_conn_id="S3")
