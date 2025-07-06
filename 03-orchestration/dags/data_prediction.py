@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import mlflow
+import numpy as np
 import pandas as pd
 import xgboost as xgb
 from airflow.decorators import dag, task
@@ -135,8 +136,8 @@ def data_prediction_dag():
         log = logging.getLogger("airflow.task")
         log.info("Extracting target variable 'duration' from DataFrames.")
         target = "duration"
-        y_train = df_train[target].to_numpy()
-        y_val = df_val[target].to_numpy()
+        y_train = df_train[target].to_list()
+        y_val = df_val[target].to_list()
         log.info("y_train shape: %s, y_val shape: %s", y_train.shape, y_val.shape)
         return {"y_train": y_train, "y_val": y_val}
 
@@ -148,6 +149,9 @@ def data_prediction_dag():
         log.info("Set MLflow tracking URI.")
         mlflow.set_experiment("nyc-taxi-experiment")
         log.info("Set MLflow experiment.")
+        # Deserialize the inputs, unnload and convert to NumPy arrays
+        y_train = np.array(y_train)
+        y_val = np.array(y_val)
         dv = pickle.loads(base64.b64decode(dv.encode('utf-8')))
         x_train = pickle.loads(base64.b64decode(x_train.encode('utf-8')))
         x_val = pickle.loads(base64.b64decode(x_val.encode('utf-8')))
