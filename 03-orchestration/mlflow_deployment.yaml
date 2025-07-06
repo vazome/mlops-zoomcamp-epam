@@ -37,10 +37,6 @@ spec:
               secretKeyRef:
                 name: postgres-secret
                 key: postgres-db
-          - name: AWS_DEFAULT_REGION
-            value: eu-north-1
-          - name: MLFLOW_S3_ENDPOINT_URL
-            value: https://s3.eu-north-1.amazonaws.com
           - name: AWS_ACCESS_KEY_ID
             valueFrom:
               secretKeyRef:

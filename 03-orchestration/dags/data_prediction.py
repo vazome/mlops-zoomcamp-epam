@@ -147,6 +147,7 @@ def data_prediction_dag():
     def train_model(x_train, y_train, x_val, y_val, dv):
         log = logging.getLogger("airflow.task")
         log.info("Starting model training.")
+        mlflow.autolog()
         mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
         log.info("Set MLflow tracking URI.")
         mlflow.set_experiment("nyc-taxi-experiment")
