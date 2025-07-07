@@ -82,13 +82,13 @@ def data_prediction_dag():
             mlflow.log_param("data_url", url)
 
             df = pd.read_parquet(url)
-            mlflow.log_metric("Intial rows:", len(df))
+            log.info("Filtered dataframe shape: %s", df.shape)
+
 
             df["duration"] = df.tpep_dropoff_datetime  - df.tpep_pickup_datetime
             df.duration = df.duration.dt.total_seconds() / 60
 
             df = df[(df.duration >= 1) & (df.duration <= 60)]
-            mlflow.log_metric("Filtered rows:", len(df))
             log.info("Filtered dataframe shape: %s", df.shape)
 
             categorical = ["PULocationID", "DOLocationID"]
@@ -104,7 +104,7 @@ def data_prediction_dag():
             mlflow.log_artifact(str(local_path), artifact_path="data")
             log.info("Logged processed data as artifact to MLflow run %s", run_id)
 
-            return
+            return run_id
 
     @task(multiple_outputs=True)
     def create_x(run_id: str):
@@ -128,13 +128,22 @@ def data_prediction_dag():
             train_dicts = df[categories].to_dict(orient="records")
             x_train = dv.fit_transform(train_dicts)
             y_train = df[target].to_numpy()
+            preprocessor_path = Path("/tmp/preprocessor.b")
+            with preprocessor_path.open("wb") as f_out:
+                pickle.dump(dv, f_out)
+            mlflow.log_artifact(str(preprocessor_path), artifact_path="preprocessor")
+
+            # Save x_train and y_train as artifacts
+            np.save("/tmp/x_train.npy", x_train)
+            np.save("/tmp/y_train.npy", y_train)
+            mlflow.log_artifact("/tmp/x_train.npy", artifact_path="data_processed")
+            mlflow.log_artifact("/tmp/y_train.npy", artifact_path="data_processed")
 
             # Serialize and pass data to next task
-            x_pickled = base64.b64encode(pickle.dumps(x_train)).decode('utf-8')
-            y_pickled = base64.b64encode(pickle.dumps(y_train)).decode('utf-8')
+            #x_pickled = base64.b64encode(pickle.dumps(x_train)).decode('utf-8')
+            #y_pickled = base64.b64encode(pickle.dumps(y_train)).decode('utf-8')
 
-            return {"x_train": x_pickled, "y_train": y_pickled}
-
+            return run_id
     @task
     def train_model(x_train: str, y_train: str, run_id: str):
         log = logging.getLogger("airflow.task")
@@ -163,18 +172,17 @@ def data_prediction_dag():
             )
         return run_id
 
-    # Define task instances
+    # We can't pass data between tasks becaust Airflow will crash, quick solution is
+    # to pass the run_id of the MLflow run to the next task, while data is stored in MLflow artifacts.
     params = get_params()
     run_id = mlflow_run(year=params["year"], month=params["month"])
 
-    read_dataframe(year=params["year"], month=params["month"], run_id=run_id)
+    read_and_pass_id = read_dataframe(year=params["year"], month=params["month"], run_id=run_id)
 
-    train_x_dict = create_x(run_id=run_id)
+    train_x_dict_pass_id = create_x(run_id=read_and_pass_id)
 
     train_model(
-        x_train=train_x_dict["x_train"],
-        y_train=train_x_dict["y_train"],
-        run_id=run_id,
+        run_id=train_x_dict_pass_id,
     )
 
 # Instantiate the DAG
