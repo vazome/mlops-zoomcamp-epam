@@ -146,7 +146,7 @@ def data_prediction_dag():
 
             return run_id
     @task
-    def train_model(x_train: str, y_train: str, run_id: str):
+    def train_model(run_id: str): # x_train: str, y_train: str,
         log = logging.getLogger("airflow.task")
         log.info("Starting model training for run_id: %s", run_id)
 
