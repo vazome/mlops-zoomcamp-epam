@@ -2,19 +2,13 @@
 # coding: utf-8
 
 import logging
-import pickle
 from datetime import datetime, timezone
 from pathlib import Path
 
-import mlflow
-import pandas as pd
-import xgboost as xgb
 from airflow.decorators import dag, task
 from airflow.models.connection import Connection
 from airflow.models.param import Param
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
-from sklearn.feature_extraction import DictVectorizer
-from sklearn.metrics import root_mean_squared_error
 
 MODELS_FOLDER = Path("models")
 MODELS_FOLDER.mkdir(exist_ok=True)

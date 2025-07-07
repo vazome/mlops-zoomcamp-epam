@@ -1,9 +1,14 @@
-FROM ghcr.io/mlflow/mlflow:v3.1.1
+FROM python:3.12-slim-bookworm
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+WORKDIR /app
 
 RUN apt-get -y update && \
-    apt-get -y install python3-dev build-essential curl pkg-config && \
-    pip install --upgrade pip && \
-    pip install psycopg2-binary boto3
+    apt-get -y install python3-dev build-essential curl pkg-config
 
-# Launch mlflow via (TEMP DB in /tmp)
+
+RUN uv init
+
+RUN uv add mlflow boto3 psycopg2-binary
+
 CMD ["bash"]
