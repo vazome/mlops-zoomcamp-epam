@@ -2,11 +2,20 @@ Apache Airflow will be installed via `uv`
 
 # Question 1. Select the Tool
 Apache Airflow (local, K8S)
-![image](https://github.com/user-attachments/assets/96650421-38e0-4035-b59e-0b4e988542ca)
+``` shell
+docker build --build-arg AIRFLOW_IMAGE_NAME=$AIRFLOW_IMAGE_NAME  --pull --tag my-airflow:0.0.1 . -f 03-orchestration/old.Dockerfile
+kind load docker-image my-airflow:0.0.1
+helm upgrade --install airflow apache-airflow/airflow --namespace airflow --create-namespace \
+    --set images.airflow.repository=my-airflow \
+    --set images.airflow.tag=0.0.1 \
+    -f 03-orchestration/aifrflow-values.yaml
+```
+<img src="https://github.com/user-attachments/assets/96650421-38e0-4035-b59e-0b4e988542ca" width=60%>
 
 # Question 2. Version
 Version 3.0.2
-![image](https://github.com/user-attachments/assets/a9a68ac9-5d49-4047-9e34-b7ab9cf15ba1)
+
+<img src="https://github.com/user-attachments/assets/a9a68ac9-5d49-4047-9e34-b7ab9cf15ba1" width=60%>
 
 # Question 3. Creating a pipeline
 It took some time to create a pipeline, to ensure stability of airflow and mlflow.
@@ -32,3 +41,8 @@ The intercept of the model is: **24.77**
 ![image](https://github.com/user-attachments/assets/dce5ad8a-4120-4cee-a807-5359a122ebce)
 
 # Question 6. Register the model
+**What's the size of the model?**
+
+The size of the result is: **4515** — which deviates from expected values of 4,534 by 19 bytes
+![image](https://github.com/user-attachments/assets/1c6031ba-0cda-469d-a3f2-6f4e4b05da9f)
+
