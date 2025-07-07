@@ -11,6 +11,7 @@ import mlflow
 import mlflow.artifacts
 import numpy as np
 import pandas as pd
+import scipy.sparse  # To save sparse matrices as artifacts
 import xgboost as xgb
 from airflow.decorators import dag, task
 from airflow.models.param import Param
@@ -141,9 +142,9 @@ def data_prediction_dag():
 
             # Save x_train and y_train as artifacts
             log.info("Saving x_train and y_train as artifacts")
-            np.save("/tmp/x_train.npy", x_train)
+            scipy.sparse.save_npz("/tmp/x_train.npz", x_train) # saving sparse matrix
             np.save("/tmp/y_train.npy", y_train)
-            mlflow.log_artifact("/tmp/x_train.npy", artifact_path="data_processed")
+            mlflow.log_artifact("/tmp/x_train.npz", artifact_path="data_processed")
             mlflow.log_artifact("/tmp/y_train.npy", artifact_path="data_processed")
 
             # Serialize and pass data to next task
@@ -165,11 +166,11 @@ def data_prediction_dag():
             #y_train = pickle.loads(base64.b64decode(y_train.encode('utf-8')))
 
             artifact_dir = mlflow.artifacts.download_artifacts(
-                run_id=run_id, artifact_path="data_processed"
+                run_id=run_id, artifact_path="data_processed",
             )
 
             # Load the arrays
-            x_train = np.load(f"{artifact_dir}/x_train.npy", allow_pickle=True)
+            x_train = scipy.sparse.load_npz(f"{artifact_dir}/x_train.npz")
             y_train = np.load(f"{artifact_dir}/y_train.npy", allow_pickle=True)
             lr = LinearRegression()
             lr.fit(x_train, y_train)
