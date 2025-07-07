@@ -18,7 +18,7 @@ from sklearn.feature_extraction import DictVectorizer
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import root_mean_squared_error
 
-# This is stupid hack, but I takes time to figure out mlflow x airflow in Kubernetes
+# This is stupid hack, but it takes time to figure out mlflow x airflow in Kubernetes
 # so we will use a public server for now, ideally would have setup vpn or bastion connection
 # but too much time wasted on this already.
 MLFLOW_TRACKING_URI = "http://ec2-16-170-230-236.eu-north-1.compute.amazonaws.com:5000"
@@ -85,7 +85,7 @@ def data_prediction_dag():
             mlflow.log_param("data_url", url)
 
             df = pd.read_parquet(url)
-            log.info("Filtered dataframe shape: %s", df.shape)
+            log.info("Unfiltered dataframe shape: %s", df.shape)
 
 
             df["duration"] = df.tpep_dropoff_datetime  - df.tpep_pickup_datetime
@@ -109,7 +109,7 @@ def data_prediction_dag():
 
             return run_id
 
-    @task(multiple_outputs=True)
+    @task()
     def create_x(run_id: str):
         log = logging.getLogger("airflow.task")
         log.info("Creating feature matrix X for run_id: %s", run_id)
@@ -128,15 +128,19 @@ def data_prediction_dag():
             categories = ["PULocationID", "DOLocationID"]
             target = "duration"
 
+            log.info("Creating feature matrix X with categories: %s", categories)
+
             train_dicts = df[categories].to_dict(orient="records")
             x_train = dv.fit_transform(train_dicts)
             y_train = df[target].to_numpy()
             preprocessor_path = Path("/tmp/preprocessor.b")
+            log.info("Saving DictVectorizer to: %s", preprocessor_path)
             with preprocessor_path.open("wb") as f_out:
                 pickle.dump(dv, f_out)
             mlflow.log_artifact(str(preprocessor_path), artifact_path="preprocessor")
 
             # Save x_train and y_train as artifacts
+            log.info("Saving x_train and y_train as artifacts")
             np.save("/tmp/x_train.npy", x_train)
             np.save("/tmp/y_train.npy", y_train)
             mlflow.log_artifact("/tmp/x_train.npy", artifact_path="data_processed")
