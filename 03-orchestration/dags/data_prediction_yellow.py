@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import base64
 import logging
-import os
 import pickle
 from datetime import datetime, timezone
 from pathlib import Path
@@ -13,10 +11,8 @@ import mlflow.artifacts
 import numpy as np
 import pandas as pd
 import scipy.sparse  # To save sparse matrices as artifacts
-import xgboost as xgb
 from airflow.decorators import dag, task
 from airflow.models.param import Param
-from mlflow.utils.file_utils import get_total_file_size
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import root_mean_squared_error
