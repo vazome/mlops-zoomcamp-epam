@@ -140,6 +140,7 @@ def data_prediction_dag():
             mlflow.log_artifact("/tmp/y_train.npy", artifact_path="data_processed")
 
             # Serialize and pass data to next task
+            # May cause memory issues, so we will not use this for now
             #x_pickled = base64.b64encode(pickle.dumps(x_train)).decode('utf-8')
             #y_pickled = base64.b64encode(pickle.dumps(y_train)).decode('utf-8')
 
@@ -152,9 +153,17 @@ def data_prediction_dag():
         mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
         with mlflow.start_run(run_id=run_id):
             # Deserialize the inputs
-            x_train = pickle.loads(base64.b64decode(x_train.encode('utf-8')))
-            y_train = pickle.loads(base64.b64decode(y_train.encode('utf-8')))
+            # Same as above, we will not use this for now
+            #x_train = pickle.loads(base64.b64decode(x_train.encode('utf-8')))
+            #y_train = pickle.loads(base64.b64decode(y_train.encode('utf-8')))
 
+            artifact_dir = mlflow.artifacts.download_artifacts(
+                run_id=run_id, artifact_path="data_processed"
+            )
+
+            # Load the arrays
+            x_train = np.load(f"{artifact_dir}/x_train.npy", allow_pickle=True)
+            y_train = np.load(f"{artifact_dir}/y_train.npy", allow_pickle=True)
             lr = LinearRegression()
             lr.fit(x_train, y_train)
 
