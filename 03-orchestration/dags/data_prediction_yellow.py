@@ -18,6 +18,9 @@ from sklearn.feature_extraction import DictVectorizer
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import root_mean_squared_error
 
+# This is stupid hack, but I takes time to figure out mlflow x airflow in Kubernetes
+# so we will use a public server for now, ideally would have setup vpn or bastion connection
+# but too much time wasted on this already.
 MLFLOW_TRACKING_URI = "http://ec2-16-170-230-236.eu-north-1.compute.amazonaws.com:5000"
 
 default_args = {"owner": "airflow", "start_date": datetime.now(timezone.utc), "retries": 0}
