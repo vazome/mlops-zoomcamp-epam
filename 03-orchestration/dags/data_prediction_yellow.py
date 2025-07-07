@@ -3,6 +3,7 @@
 
 import base64
 import logging
+import os
 import pickle
 from datetime import datetime, timezone
 from pathlib import Path
@@ -15,6 +16,7 @@ import scipy.sparse  # To save sparse matrices as artifacts
 import xgboost as xgb
 from airflow.decorators import dag, task
 from airflow.models.param import Param
+from mlflow.utils.file_utils import get_total_file_size
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import root_mean_squared_error
@@ -182,11 +184,18 @@ def data_prediction_dag():
             # Log metric and model
             mlflow.log_metric("rmse", rmse)
             log.info("Intercept is: %s", lr.intercept_)
+
+            # Calculate model size in memory
+            model_bytes = pickle.dumps(lr)
+            model_size_bytes = len(model_bytes)
+            log.info("Model size: %s in bytes", model_size_bytes)
+
             mlflow.sklearn.log_model(
                 sk_model=lr,
                 artifact_path="model",
                 registered_model_name="nyc-taxi-yellow-prediction",
             )
+
         return run_id
 
     # We can't pass data between tasks becaust Airflow will crash, quick solution is
