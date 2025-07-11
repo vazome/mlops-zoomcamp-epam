@@ -2,7 +2,6 @@ import argparse
 import logging
 import pickle
 import urllib.request
-from ast import arg
 from pathlib import Path
 
 import pandas as pd

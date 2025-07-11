@@ -8,6 +8,6 @@ RUN apt-get -y update && \
 
 RUN uv init
 
-RUN uv add mlflow boto3 psycopg2-binary
+RUN uv add pandas
 
 CMD ["bash"]
