@@ -1,10 +1,11 @@
 import argparse
 import logging
 import pickle
+import urllib.request
+from ast import arg
 from pathlib import Path
 
 import pandas as pd
-from sklearn.metrics import mean_squared_error
 
 logging.basicConfig(
     level=logging.INFO,
@@ -14,10 +15,19 @@ log = logging.getLogger(__name__)
 
 categorical = ["PULocationID", "DOLocationID"]
 
-
 def get_model():
-    with open("model.bin", "rb") as f_in:
-        dv, model = pickle.load(f_in)
+    if Path("model.bin").exists():
+        with open("model.bin", "rb") as f_in:
+            dv, model = pickle.load(f_in)
+    else:
+        with urllib.request.urlopen(
+            "https://github.com/DataTalksClub/mlops-zoomcamp/raw/refs/heads/main/cohorts/2025/04-deployment/homework/model.bin",
+            ) as f_in, open("model.bin", "wb") as f_out:
+            f_out.write(f_in.read())
+
+        with open("model.bin", "rb") as f_in:
+            dv, model = pickle.load(f_in)
+
     return dv, model
 
 
@@ -38,29 +48,38 @@ def prediction(dv, df, model):
     dicts = df[categorical].to_dict(orient="records")
     X_val = dv.transform(dicts)
     y_pred = model.predict(X_val)
-    log(f"Standard Deviation: {y_pred.std():.2f}")
+    log.info(f"Mean: {y_pred.mean():.2f}")
+    log.info(f"Standard Deviation: {y_pred.std():.2f}")
     return y_pred
 
 
 def save_results(df, y_pred, year, month):
-    output_file = f"yellow_tripdata_{year:04d}-{month:02d}.parquet"
     df_result = pd.DataFrame()
     df_result["prediction"] = y_pred
     df_result["ride_id"] = f"{year:04d}/{month:02d}_" + df.index.astype("str")
 
-    log(f"Sampling top 3:\n{df_result.head(3)}")
+    log.info(f"Sampling top 3:\n{df_result.head(3)}")
 
     df_result.to_parquet(
-        output_file,
+        file_name,
         engine="pyarrow",
         compression=None,
         index=False,
     )
-    log(f"Export DF Size: {Path(output_file).stat().st_size / 1024 / 1024:.02f} MB")
-
+    log.info(f"Export DF Size: {Path(file_name).stat().st_size / 1024 / 1024:.02f} MB")
 
 if __name__ == "__main__":
+    # CLI Argument Parsing
     parser = argparse.ArgumentParser()
     parser.add_argument("--year", type=int, default=2023)
     parser.add_argument("--month", type=int, default=3)
     args = parser.parse_args()
+
+    # Download and Save file name construction
+    file_name = f"yellow_tripdata_{args.year:04d}-{args.month:02d}.parquet"
+
+    # Execution
+    dv, model = get_model()
+    df = read_data(f"https://d37ci6vzurychx.cloudfront.net/trip-data/{file_name}")
+    y_pred = prediction(dv, df, model)
+    save_results(df, y_pred, args.year, args.month)
