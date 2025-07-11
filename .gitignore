@@ -206,3 +206,4 @@ mlflow.db
 03-orchestration/old-mlflow-values.yaml
 03-orchestration/mlflow-values.yaml
 03-orchestration/old-mlflow-values.yaml
+04-orchestration/yellow_tripdata_2023-03.parquet

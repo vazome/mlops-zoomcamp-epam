@@ -6,7 +6,6 @@ WORKDIR /app
 RUN apt-get -y update && \
     apt-get -y install python3-dev build-essential curl pkg-config
 
-
 RUN uv init
 
 RUN uv add mlflow boto3 psycopg2-binary
