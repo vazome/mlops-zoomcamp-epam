@@ -1,5 +1,6 @@
 # Q1. Notebook
 **What's the standard deviation of the predicted duration for this dataset?**
+
 Source: [scoring.ipynb](scoring.ipynb)
 
 `6.25`
@@ -28,7 +29,7 @@ Note: UV is used instead of pipenv. Scikit-Learn version is 1.7.0 (see [uv.lock]
 # Q5. Parametrize the script
 **What's the mean predicted duration?**
 
-Source: [scoring.dockerfile](scoring.dockerfile)
+Source: [scoring.py](scoring.py)
 
 `14.20`
 
