@@ -7,15 +7,23 @@ requires-python = ">=3.12"
 dependencies = [
     "apache-airflow[amazon,celery,docker,kubernetes,postgres,redis]>=3.0.2",
     "boto3>=1.38.46",
+    "evidently==0.6.7",
     "fastparquet>=2024.11.0",
     "hyperopt>=0.2.7",
+    "joblib>=1.5.1",
     "matplotlib>=3.10.3",
     "mlflow>=3.1.1",
+    "numpy>=2.0.2",
     "pandas>=2.3.0",
+    "prefect>=2.20.20",
+    "psycopg>=3.2.9",
+    "psycopg-binary>=3.2.9",
     "pyarrow>=20.0.0",
+    "requests>=2.32.4",
     "scikit-learn>=1.7.0",
     "seaborn>=0.13.2",
     "setuptools>=80.9.0",
+    "tqdm>=4.67.1",
     "xgboost>=3.0.2",
 ]
 
