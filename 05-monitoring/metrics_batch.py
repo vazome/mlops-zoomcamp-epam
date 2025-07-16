@@ -142,11 +142,13 @@ def generate_predictions(model, data):
 def reports_and_metrics(reference_data, current_data):
     ws = Workspace("workspace")
 
-    project = ws.get_project("NYC Taxi Data Quality Project")
-    if not ws.get_project("NYC Taxi Data Quality Project"):
+    try:
+        project = ws.get_project("NYC Taxi Data Quality Project")
+    except (ValueError, Exception):
+        # If project doesn't exist or there's an error, create a new one
         project = ws.create_project("NYC Taxi Data Quality Project")
         project.description = "My project description"
-    project.save()
+        project.save()
 
     num_features = ["passenger_count", "trip_distance", "fare_amount", "total_amount"]
     cat_features = ["PULocationID", "DOLocationID"]
@@ -160,7 +162,7 @@ def reports_and_metrics(reference_data, current_data):
     report = Report(
         metrics=[
             ColumnQuantileMetric(column_name="fare_amount", quantile=0.5),
-            ColumnMissingValuesMetric(column_name="congestion_surcharge"),
+            ColumnMissingValuesMetric(column_name="trip_type"),
         ]
     )
 
@@ -173,9 +175,10 @@ def reports_and_metrics(reference_data, current_data):
     result = report.as_dict()
 
     quntile_metric = result["metrics"][0]["result"]
-    missing_values_metric = result["metrics"][1]["result"]
+    trip_type_metric = result["metrics"][1]["result"]
+    
     log.info(f"Quantile value: {quntile_metric}")
-    log.info(f"Missing values: {missing_values_metric}")
+    log.info(f"Missing values - trip_type: {trip_type_metric}")
     # prediction_drift = result["metrics"][0]["result"]["drift_score"]
     # num_drifted_columns = result["metrics"][1]["result"]["number_of_drifted_columns"]
     # missing_values_share = result["metrics"][2]["result"]["current"][
@@ -211,7 +214,7 @@ def calculate_dummy_metrics_postgresql(curr):
     )
 
 
-def main():
+def connect_pg():
     prep_db()
     last_send = datetime.datetime.now() - datetime.timedelta(seconds=10)
     with psycopg.connect(
@@ -250,24 +253,24 @@ if __name__ == "__main__":
     train_data = data[:30000]
     val_data = data[30000:]
 
-    # Train model and generate predictions
-    model = train_model(train_data)
-    train_data = generate_predictions(model, train_data)
-    val_data = generate_predictions(model, val_data)
-
-    # Evaluate model
-    target = "duration_min"
-    train_mae = mean_absolute_error(train_data[target], train_data["prediction"])
-    val_mae = mean_absolute_error(val_data[target], val_data["prediction"])
-
-    log.info(f"Training MAE: {train_mae:.4f}")
-    log.info(f"Validation MAE: {val_mae:.4f}")
-
-    # Save reference data
-    val_data.to_parquet("data/reference.parquet")
-    log.info("Reference data saved to data/reference.parquet")
-
-    # Run Evidently report
+    ## Train model and generate predictions
+    #model = train_model(train_data)
+    #train_data = generate_predictions(model, train_data)
+    #val_data = generate_predictions(model, val_data)
+#
+    ## Evaluate model
+    #target = "duration_min"
+    #train_mae = mean_absolute_error(train_data[target], train_data["prediction"])
+    #val_mae = mean_absolute_error(val_data[target], val_data["prediction"])
+#
+    #log.info(f"Training MAE: {train_mae:.4f}")
+    #log.info(f"Validation MAE: {val_mae:.4f}")
+#
+    ## Save reference data
+    #val_data.to_parquet("data/reference.parquet")
+    #log.info("Reference data saved to data/reference.parquet")
+#
+    ## Run Evidently report
 
     result = reports_and_metrics(train_data, val_data)
 
