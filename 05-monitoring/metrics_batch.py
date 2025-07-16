@@ -154,13 +154,21 @@ def reports_and_metrics(reference_data, current_data):
     column_mapping = ColumnMapping(
         target="fare_amount",
         numerical_features=num_features,
-        categorical_features=cat_features)
+        categorical_features=cat_features,
+    )
 
-    report = Report(metrics=[
-        ColumnQuantileMetric(column_name="fare_amount", quantile=0.5),
-        ColumnMissingValuesMetric(column_name="congestion_surcharge")])
+    report = Report(
+        metrics=[
+            ColumnQuantileMetric(column_name="fare_amount", quantile=0.5),
+            ColumnMissingValuesMetric(column_name="congestion_surcharge"),
+        ]
+    )
 
-    report.run(reference_data=reference_data, current_data=current_data, column_mapping=column_mapping)
+    report.run(
+        reference_data=reference_data,
+        current_data=current_data,
+        column_mapping=column_mapping,
+    )
 
     result = report.as_dict()
 
@@ -168,24 +176,29 @@ def reports_and_metrics(reference_data, current_data):
     missing_values_metric = result["metrics"][1]["result"]
     log.info(f"Quantile value: {quntile_metric}")
     log.info(f"Missing values: {missing_values_metric}")
-    #prediction_drift = result["metrics"][0]["result"]["drift_score"]
-    #num_drifted_columns = result["metrics"][1]["result"]["number_of_drifted_columns"]
-    #missing_values_share = result["metrics"][2]["result"]["current"][
+    # prediction_drift = result["metrics"][0]["result"]["drift_score"]
+    # num_drifted_columns = result["metrics"][1]["result"]["number_of_drifted_columns"]
+    # missing_values_share = result["metrics"][2]["result"]["current"][
     #    "share_of_missing_values"
-    #]
+    # ]
 
-    #log.info(f"Prediction drift score: {prediction_drift:.4f}")
-    #log.info(f"Number of drifted columns: {num_drifted_columns}")
-    #log.info(f"Share of missing values: {missing_values_share:.4f}")
+    # log.info(f"Prediction drift score: {prediction_drift:.4f}")
+    # log.info(f"Number of drifted columns: {num_drifted_columns}")
+    # log.info(f"Share of missing values: {missing_values_share:.4f}")
 
 
 def prep_db():
-    with psycopg.connect("host=localhost port=5432 user=postgres password=example", autocommit=True) as conn:
+    with psycopg.connect(
+        "host=localhost port=5432 user=postgres password=example", autocommit=True
+    ) as conn:
         res = conn.execute("SELECT 1 FROM pg_database WHERE datname='test'")
         if len(res.fetchall()) == 0:
             conn.execute("create database test;")
-        with psycopg.connect("host=localhost port=5432 dbname=test user=postgres password=example") as conn:
+        with psycopg.connect(
+            "host=localhost port=5432 dbname=test user=postgres password=example"
+        ) as conn:
             conn.execute(create_table_statement)
+
 
 def calculate_dummy_metrics_postgresql(curr):
     value1 = rand.randint(0, 1000)
@@ -194,13 +207,17 @@ def calculate_dummy_metrics_postgresql(curr):
 
     curr.execute(
         "insert into dummy_metrics(timestamp, value1, value2, value3) values (%s, %s, %s, %s)",
-        (datetime.datetime.now(pytz.timezone('Europe/London')), value1, value2, value3)
+        (datetime.datetime.now(pytz.timezone("Europe/London")), value1, value2, value3),
     )
+
 
 def main():
     prep_db()
     last_send = datetime.datetime.now() - datetime.timedelta(seconds=10)
-    with psycopg.connect("host=localhost port=5432 dbname=test user=postgres password=example", autocommit=True) as conn:
+    with psycopg.connect(
+        "host=localhost port=5432 dbname=test user=postgres password=example",
+        autocommit=True,
+    ) as conn:
         for i in range(0, 100):
             with conn.cursor() as curr:
                 calculate_dummy_metrics_postgresql(curr)
@@ -212,8 +229,6 @@ def main():
             while last_send < new_send:
                 last_send = last_send + datetime.timedelta(seconds=10)
             log.info("data sent")
-
-
 
 
 if __name__ == "__main__":
@@ -266,8 +281,3 @@ if __name__ == "__main__":
         numerical_features=num_features,
         categorical_features=cat_features,
     )
-
-
-
-
-
