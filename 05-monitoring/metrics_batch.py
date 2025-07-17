@@ -1,7 +1,9 @@
 import argparse
 import datetime
 import io
+import json
 import logging
+import os
 import random
 import time
 import uuid
@@ -46,13 +48,15 @@ log = logging.getLogger(__name__)
 SEND_TIMEOUT = 10
 rand = random.Random()
 
-create_table_statement = """
-drop table if exists dummy_metrics;
-create table dummy_metrics(
+pg_password = os.environ.get("POSTGRES_PASSWORD")
+
+create_metrics_table_statement = """
+create table if not exists taxi_metrics(
     timestamp timestamp,
-    value1 integer,
-    value2 varchar,
-    value3 float
+    dataset_type varchar(20),
+    metric_name varchar(50),
+    metric_value float,
+    additional_info jsonb
 )
 """
 
@@ -108,44 +112,11 @@ def load_and_preprocess_data(file_path):
     return data
 
 
-def train_model(train_data, num_features, cat_features):
-    """Train linear regression model."""
-    target = "duration_min"
-    num_features = ["passenger_count", "trip_distance", "fare_amount", "total_amount"]
-    cat_features = ["PULocationID", "DOLocationID"]
-
-    log.info("Training linear regression model")
-    model = LinearRegression()
-    model.fit(train_data[num_features + cat_features], train_data[target])
-
-    # Save model
-    Path("models").mkdir(exist_ok=True)
-    with open("models/lin_reg.bin", "wb") as f_out:
-        dump(model, f_out)
-
-    log.info("Model trained and saved to models/lin_reg.bin")
-    return model
-
-
-def generate_predictions(model, data):
-    """Generate predictions for the data."""
-    num_features = ["passenger_count", "trip_distance", "fare_amount", "total_amount"]
-    cat_features = ["PULocationID", "DOLocationID"]
-
-    predictions = model.predict(data[num_features + cat_features])
-    data["prediction"] = predictions
-
-    log.info(f"Generated predictions for {len(data)} samples")
-    return data
-
-
 def reports_and_metrics(reference_data, current_data):
     ws = Workspace("workspace")
-
     try:
         project = ws.get_project("NYC Taxi Data Quality Project")
     except (ValueError, Exception):
-        # If project doesn't exist or there's an error, create a new one
         project = ws.create_project("NYC Taxi Data Quality Project")
         project.description = "My project description"
         project.save()
@@ -173,69 +144,51 @@ def reports_and_metrics(reference_data, current_data):
     )
 
     result = report.as_dict()
+    quantile_metric = result["metrics"][0]["result"]
+    missing_metric = result["metrics"][1]["result"]
 
-    quntile_metric = result["metrics"][0]["result"]
-    trip_type_metric = result["metrics"][1]["result"]
-    
-    log.info(f"Quantile value: {quntile_metric}")
-    log.info(f"Missing values - trip_type: {trip_type_metric}")
-    # prediction_drift = result["metrics"][0]["result"]["drift_score"]
-    # num_drifted_columns = result["metrics"][1]["result"]["number_of_drifted_columns"]
-    # missing_values_share = result["metrics"][2]["result"]["current"][
-    #    "share_of_missing_values"
-    # ]
+    log.info(f"Quantile value: {quantile_metric}")
+    log.info(f"Missing values - trip_type: {missing_metric}")
 
-    # log.info(f"Prediction drift score: {prediction_drift:.4f}")
-    # log.info(f"Number of drifted columns: {num_drifted_columns}")
-    # log.info(f"Share of missing values: {missing_values_share:.4f}")
+    # Prepare metrics for DB
+    metrics_data = [
+        ("fare_amount_quantile", quantile_metric["current"]["value"], json.dumps(quantile_metric)),
+        ("trip_type_missing", missing_metric["current"]["number_of_missing_values"], json.dumps(missing_metric)),
+    ]
+    return metrics_data
 
 
-def prep_db():
+def prep_db_and_save_metrics(metrics_data):
+    """Prepare database and save metrics to PostgreSQL."""
     with psycopg.connect(
-        "host=localhost port=5432 user=postgres password=example", autocommit=True
+        f"host=localhost port=5432 user=postgres password={pg_password}", autocommit=True
     ) as conn:
         res = conn.execute("SELECT 1 FROM pg_database WHERE datname='test'")
         if len(res.fetchall()) == 0:
             conn.execute("create database test;")
-        with psycopg.connect(
-            "host=localhost port=5432 dbname=test user=postgres password=example"
-        ) as conn:
-            conn.execute(create_table_statement)
 
-
-def calculate_dummy_metrics_postgresql(curr):
-    value1 = rand.randint(0, 1000)
-    value2 = str(uuid.uuid4())
-    value3 = rand.random()
-
-    curr.execute(
-        "insert into dummy_metrics(timestamp, value1, value2, value3) values (%s, %s, %s, %s)",
-        (datetime.datetime.now(pytz.timezone("Europe/London")), value1, value2, value3),
-    )
-
-
-def connect_pg():
-    prep_db()
-    last_send = datetime.datetime.now() - datetime.timedelta(seconds=10)
     with psycopg.connect(
-        "host=localhost port=5432 dbname=test user=postgres password=example",
-        autocommit=True,
+        f"host=localhost port=5432 dbname=test user=postgres password={pg_password}", autocommit=True
     ) as conn:
-        for i in range(0, 100):
-            with conn.cursor() as curr:
-                calculate_dummy_metrics_postgresql(curr)
+        conn.execute(create_metrics_table_statement)
 
-            new_send = datetime.datetime.now()
-            seconds_elapsed = (new_send - last_send).total_seconds()
-            if seconds_elapsed < SEND_TIMEOUT:
-                time.sleep(SEND_TIMEOUT - seconds_elapsed)
-            while last_send < new_send:
-                last_send = last_send + datetime.timedelta(seconds=10)
-            log.info("data sent")
+        with conn.cursor() as curr:
+            save_metrics_to_postgresql(curr, metrics_data)
 
+
+def save_metrics_to_postgresql(curr, metrics_data):
+    """Save Evidently metrics to PostgreSQL."""
+    timestamp = datetime.datetime.now(pytz.timezone("Asia/Tbilisi"))
+
+    for metric_name, metric_value, additional_info in metrics_data:
+        # dataset_type is hardcoded in this case...
+        # ...because we don't have a tech requirement and variety of datasets.
+        curr.execute(
+            "insert into taxi_metrics(timestamp, dataset_type, metric_name, metric_value, additional_info) values (%s, %s, %s, %s, %s)",
+            (timestamp, "validation", metric_name, metric_value, additional_info),
+        )
 
 if __name__ == "__main__":
-    # CLI Argument Parsing
     parser = argparse.ArgumentParser(
         description="Process green taxi data for monitoring"
     )
@@ -245,42 +198,12 @@ if __name__ == "__main__":
     parser.add_argument("--month", type=int, default=3, help="Month of data to process")
     args = parser.parse_args()
 
-    # Download and load data
     data_path = download_data(args.year, args.month)
     data = load_and_preprocess_data(data_path)
 
-    # Split data for training and validation
     train_data = data[:30000]
     val_data = data[30000:]
 
-    ## Train model and generate predictions
-    #model = train_model(train_data)
-    #train_data = generate_predictions(model, train_data)
-    #val_data = generate_predictions(model, val_data)
-#
-    ## Evaluate model
-    #target = "duration_min"
-    #train_mae = mean_absolute_error(train_data[target], train_data["prediction"])
-    #val_mae = mean_absolute_error(val_data[target], val_data["prediction"])
-#
-    #log.info(f"Training MAE: {train_mae:.4f}")
-    #log.info(f"Validation MAE: {val_mae:.4f}")
-#
-    ## Save reference data
-    #val_data.to_parquet("data/reference.parquet")
-    #log.info("Reference data saved to data/reference.parquet")
-#
-    ## Run Evidently report
+    metrics_data = reports_and_metrics(train_data, val_data)
 
-    result = reports_and_metrics(train_data, val_data)
-
-    # Set up column mapping for dashboard
-    num_features = ["passenger_count", "trip_distance", "fare_amount", "total_amount"]
-    cat_features = ["PULocationID", "DOLocationID"]
-
-    column_mapping = ColumnMapping(
-        target=None,
-        prediction="prediction",
-        numerical_features=num_features,
-        categorical_features=cat_features,
-    )
+    prep_db_and_save_metrics(metrics_data)

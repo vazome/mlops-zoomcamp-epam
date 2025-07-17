@@ -11,7 +11,11 @@ services:
 #    container_name: db
     restart: always
     environment:
-      POSTGRES_PASSWORD: "op://LAB/oacxzqq4lrwmh4oeti6uzbtp5i/password"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: "test"
+    ports:
+      - "5432:5432"
     networks:
       - back-tier
   adminer:
@@ -23,6 +27,9 @@ services:
     networks:
       - back-tier
       - front-tier
+    depends_on:
+      - db
+    
   grafana:
     image: grafana/grafana-enterprise
     user: "472"
