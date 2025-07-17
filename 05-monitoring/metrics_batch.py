@@ -202,9 +202,6 @@ def reports_and_metrics(reference_data, current_data):
     quantile_metric = result["metrics"][0]["result"]
     missing_metric = result["metrics"][1]["result"]
 
-    log.info(f"Quantile value: {quantile_metric}")
-    log.info(f"Missing values - trip_type: {missing_metric}")
-
     metrics_data = [
         ("fare_amount_quantile", quantile_metric["current"]["value"], json.dumps(quantile_metric)),
         ("trip_type_missing", missing_metric["current"]["number_of_missing_values"], json.dumps(missing_metric)),

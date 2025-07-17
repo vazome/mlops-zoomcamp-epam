@@ -6,6 +6,7 @@ Repo for partaking in zoomcamp course with EPAM reviewing instructors
 - Week 2: [02-experiment-tracking/homework.ipynb](02-experiment-tracking/homework.ipynb)
 - Week 3: [03-orchestration/README.md](03-orchestration/README.md)
 - Week 4: [04-orchestration/README.md](04-orchestration/README.md)
+- Week 5: [05-monitoring/README.md](05-monitoring/README.md)
 
 # Note
 Originally instructor recommended to use Anaconda, but I use [UV](https://github.com/astral-sh/uv), I find it generally better and convenient. Plus their Anaconda uses old or obsolete versions of packages.
