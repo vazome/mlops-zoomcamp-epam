@@ -19,6 +19,7 @@ Source: [metrics_batch.py](metrics_batch.py)
 **What is the maximum value of metric quantile = 0.5 on the "fare_amount" column during March 2024 (calculated daily)?**
 
 `14.2`
+
 ![alt text](image-3.png)
 ![alt text](<image-2.png>)
 
@@ -27,4 +28,4 @@ Source: [metrics_batch.py](metrics_batch.py)
 
 `project_folder/dashboards` (05-monitoring/dashboards)
 
-We put it in the `./dashboards` so that it loads into Grafana since we mapped the volume.
+We put it in the `./dashboards` so that it loads into Grafana since we mapped the volume, we can also utilize [CI/CD](https://grafana.com/docs/grafana/latest/observability-as-code/foundation-sdk/dashboard-automation/) for dashboard autoprovisioning.
