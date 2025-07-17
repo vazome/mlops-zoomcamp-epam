@@ -5,7 +5,7 @@ Source: [baseline_model_nyc_taxi_data.ipynb](baseline_model_nyc_taxi_data.ipynb)
 
 `57457`
 
-![alt text](image-1.png)
+![alt text](assets/image-1.png)
 
 
 # Q2. Metric
@@ -20,8 +20,8 @@ Source: [metrics_batch.py](metrics_batch.py)
 
 `14.2`
 
-![alt text](image-3.png)
-![alt text](<image-2.png>)
+![alt text](assets/image-3.png)
+![alt text](assets/image-2.png)
 
 # Q4. Dashboard
 **Where to place a dashboard config file?**
