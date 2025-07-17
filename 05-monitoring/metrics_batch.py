@@ -7,6 +7,7 @@ import os
 import random
 import time
 import uuid
+from calendar import month
 from pathlib import Path
 
 import pandas as pd
@@ -93,7 +94,7 @@ def download_data(year, month):
     return save_path
 
 
-def load_and_preprocess_data(file_path):
+def load_and_preprocess_data(file_path, year, month):
     """Load and preprocess green taxi data."""
     log.info(f"Loading data from {file_path}")
     data = pd.read_parquet(file_path)
@@ -108,18 +109,72 @@ def load_and_preprocess_data(file_path):
     data = data[(data.duration_min >= 0) & (data.duration_min <= 60)]
     data = data[(data.passenger_count > 0) & (data.passenger_count <= 8)]
 
+    # Convert to datetime and sort
+    data["lpep_pickup_datetime"] = pd.to_datetime(data["lpep_pickup_datetime"])
+
+    data = data[
+        (data["lpep_pickup_datetime"].dt.year == year) & 
+        (data["lpep_pickup_datetime"].dt.month == month)
+    ]
+
+    data = data.sort_values("lpep_pickup_datetime")
+
     log.info(f"Data shape after preprocessing: {data.shape}")
+    log.info(f"Date range: {data['lpep_pickup_datetime'].min().date()} to {data['lpep_pickup_datetime'].max().date()}")
     return data
 
 
+def process_daily_metrics(data):
+    """Process metrics for each day in the dataset."""
+    # range of dates from first to last
+    date_range = pd.date_range(
+        data["lpep_pickup_datetime"].min().date(),
+        data["lpep_pickup_datetime"].max().date()
+    )
+
+    day_one = date_range[0]
+    reference_data = data[data["lpep_pickup_datetime"].dt.date == day_one.date()]
+
+    all_metrics_data = []
+
+    log.info(f"Processing metrics for {len(date_range)} days")
+
+    for day in date_range:
+        current_day_data = data[data["lpep_pickup_datetime"].dt.date == day.date()]
+
+        if not current_day_data.empty and len(current_day_data) > 10:
+            try:
+                daily_metrics = reports_and_metrics(reference_data, current_day_data)
+
+                for metric_name, metric_value, additional_info in daily_metrics:
+                    additional_info = json.loads(additional_info)
+                    additional_info["processing_date"] = day.date().isoformat()
+
+                    all_metrics_data.append((
+                        metric_name,
+                        metric_value,
+                        json.dumps(additional_info),
+                        day.date()
+                    ))
+
+                log.info(f"Processed metrics for {day.date()}")
+
+            except Exception as e:
+                log.error(f"Failed to process metrics for {day.date()}: {e}")
+        else:
+            log.warning(f"Insufficient data for {day.date()} ({len(current_day_data)} rows)")
+
+    return all_metrics_data
+
+
 def reports_and_metrics(reference_data, current_data):
-    ws = Workspace("workspace")
-    try:
-        project = ws.get_project("NYC Taxi Data Quality Project")
-    except (ValueError, Exception):
-        project = ws.create_project("NYC Taxi Data Quality Project")
-        project.description = "My project description"
-        project.save()
+    #ws = Workspace("workspace")
+    #try:
+    #    project = ws.get_project("NYC Taxi Data Quality Project")
+    #except (ValueError, Exception):
+    #    project = ws.create_project("NYC Taxi Data Quality Project")
+    #    project.description = "My project description"
+    #    project.save()
 
     num_features = ["passenger_count", "trip_distance", "fare_amount", "total_amount"]
     cat_features = ["PULocationID", "DOLocationID"]
@@ -150,7 +205,6 @@ def reports_and_metrics(reference_data, current_data):
     log.info(f"Quantile value: {quantile_metric}")
     log.info(f"Missing values - trip_type: {missing_metric}")
 
-    # Prepare metrics for DB
     metrics_data = [
         ("fare_amount_quantile", quantile_metric["current"]["value"], json.dumps(quantile_metric)),
         ("trip_type_missing", missing_metric["current"]["number_of_missing_values"], json.dumps(missing_metric)),
@@ -177,12 +231,12 @@ def prep_db_and_save_metrics(metrics_data):
 
 
 def save_metrics_to_postgresql(curr, metrics_data):
-    """Save Evidently metrics to PostgreSQL."""
-    timestamp = datetime.datetime.now(pytz.timezone("Asia/Tbilisi"))
+    """Save Evidently metrics to PostgreSQL with date support."""
+    for metric_name, metric_value, additional_info, processing_date in metrics_data:
+        # so we use time from the data, not actual time
+        timestamp = datetime.datetime.combine(processing_date, datetime.time())
+        timestamp = pytz.timezone("Asia/Tbilisi").localize(timestamp)
 
-    for metric_name, metric_value, additional_info in metrics_data:
-        # dataset_type is hardcoded in this case...
-        # ...because we don't have a tech requirement and variety of datasets.
         curr.execute(
             "insert into taxi_metrics(timestamp, dataset_type, metric_name, metric_value, additional_info) values (%s, %s, %s, %s, %s)",
             (timestamp, "validation", metric_name, metric_value, additional_info),
@@ -199,11 +253,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     data_path = download_data(args.year, args.month)
-    data = load_and_preprocess_data(data_path)
+    data = load_and_preprocess_data(data_path, args.year, args.month)
 
-    train_data = data[:30000]
-    val_data = data[30000:]
-
-    metrics_data = reports_and_metrics(train_data, val_data)
+    metrics_data = process_daily_metrics(data)
 
     prep_db_and_save_metrics(metrics_data)
+
+    log.info(f"Completed processing {len(metrics_data)} metrics entries")
