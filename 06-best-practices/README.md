@@ -1,6 +1,4 @@
 # Q1. Prepare the dataset
-**What is the shape of the downloaded data? How many rows are there?**
-
 Source: [06-best-practices/batch.py](batch.py)
 
 ![alt text](assets/image.png)
@@ -10,7 +8,7 @@ Source: [../pyproject.toml](../pyproject.toml)
 
 ![alt text](assets/image-1.png)
 
-**WWhat should be the other file?**
+**What should be the other file?**
 
 `__init__.py`
 
@@ -48,6 +46,6 @@ Source: [06-best-practices/integration_test.py](integration_test.py)
 
 Source: [06-best-practices/integration_test.py](integration_test.py)
 
-36.28
+`36.28`
 
 ![alt text](assets/image-5.png)
