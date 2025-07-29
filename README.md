@@ -5,7 +5,7 @@ Repo for partaking in zoomcamp course with EPAM reviewing instructors
 - Week 1: [01-intro/homework.ipynb](01-intro/homework.ipynb)
 - Week 2: [02-experiment-tracking/homework.ipynb](02-experiment-tracking/homework.ipynb)
 - Week 3: [03-orchestration/README.md](03-orchestration/README.md)
-- Week 4: [04-orchestration/README.md](04-orchestration/README.md)
+- Week 4: [04-deployment/README.md](04-deployment/README.md)
 - Week 5: [05-monitoring/README.md](05-monitoring/README.md)
 
 # Note

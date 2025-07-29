@@ -1,10 +1,14 @@
-FROM python:3.10.9-slim
+FROM python:3.12-slim
 
-RUN pip install -U pip & pip install pipenv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-COPY [ "Pipfile", "Pipfile.lock", "./" ]
+ENV UV_SYSTEM_PYTHON=1
 
-RUN pipenv install --system --deploy
+WORKDIR /app
+
+COPY uv.lock pyproject.toml ./
+
+RUN uv sync .
 
 COPY [ "batch.py", "batch.py" ]
 COPY [ "model.bin", "model.bin" ]
