@@ -21,7 +21,7 @@ dependencies = [
     "pyarrow>=20.0.0",
     "requests>=2.32.4",
     "s3fs>=2025.7.0",
-    "scikit-learn>=1.7.0",
+    "scikit-learn<=1.5.0",
     "seaborn>=0.13.2",
     "setuptools>=80.9.0",
     "tqdm>=4.67.1",
@@ -43,7 +43,7 @@ airflow-server = [
     "xgboost>=3.0.2",
     "pandas>=2.3.0",
     "hyperopt>=0.2.7",
-    "scikit-learn>=1.7.0",
+    "scikit-learn<=1.7.0",
 ]
 
 [tool.setuptools.packages.find]
